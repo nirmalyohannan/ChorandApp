@@ -44,8 +44,45 @@ class SummaryActivity : AppCompatActivity() {
 
         sessionManager = SessionManager(this)
 
+        setupEdgeToEdge()
         setupUI()
         loadSummary()
+    }
+
+    private fun setupEdgeToEdge() {
+        // Enable Edge-to-Edge window layout
+        window.decorView.systemUiVisibility =
+            View.SYSTEM_UI_FLAG_LAYOUT_STABLE or
+                    View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
+                    View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+
+        // Apply window insets programmatically
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, insets ->
+            val statusInsets = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.statusBars())
+            val navInsets = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.navigationBars())
+
+            // Apply status bar top inset as padding to the Header view
+            // The header view is the first child in contentGroup, which is a vertical LinearLayout
+            val headerView = binding.contentGroup.getChildAt(0)
+            headerView?.setPadding(
+                headerView.paddingLeft,
+                statusInsets.top,
+                headerView.paddingRight,
+                headerView.paddingBottom
+            )
+
+            // Apply navigation bar bottom inset as padding to the Bottom Action Bar container
+            // The bottom action bar is the last child in contentGroup vertical LinearLayout
+            val bottomBar = binding.contentGroup.getChildAt(binding.contentGroup.childCount - 1)
+            bottomBar?.setPadding(
+                bottomBar.paddingLeft,
+                bottomBar.paddingTop,
+                bottomBar.paddingRight,
+                navInsets.bottom
+            )
+
+            insets
+        }
     }
 
     private fun setupUI() {

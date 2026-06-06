@@ -157,8 +157,26 @@ class WebScraperActivity : AppCompatActivity() {
         binding.tvCurrentUrl.text = targetUrl
 
         binding.btnStop.setOnClickListener {
-            stopScraping()
+            showExitConfirmationDialog()
         }
+
+        // Intercept onBackPressed to show warning dialog
+        onBackPressedDispatcher.addCallback(this, object : androidx.activity.OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                showExitConfirmationDialog()
+            }
+        })
+    }
+
+    private fun showExitConfirmationDialog() {
+        androidx.appcompat.app.AlertDialog.Builder(this, R.style.ChorandAlertDialog)
+            .setTitle("Stop Scraping?")
+            .setMessage("Are you sure you want to stop recording traffic and view the summary?")
+            .setPositiveButton("Stop") { _, _ ->
+                stopScraping()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     private fun observeEventCount() {
@@ -190,14 +208,6 @@ class WebScraperActivity : AppCompatActivity() {
             return true
         }
         return super.onKeyDown(keyCode, event)
-    }
-
-    override fun onBackPressed() {
-        if (binding.webView.canGoBack()) {
-            binding.webView.goBack()
-        } else {
-            stopScraping()
-        }
     }
 
     override fun onDestroy() {
