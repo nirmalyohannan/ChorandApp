@@ -41,12 +41,12 @@
                         android:layout_height="88dp"
                         android:background="@drawable/bg_logo_glow" />
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                    <ImageView
+                        android:layout_width="56dp"
+                        android:layout_height="56dp"
                         android:layout_gravity="center"
-                        android:text="⚡"
-                        android:textSize="36sp" />
+                        android:src="@mipmap/ic_launcher_round"
+                        android:contentDescription="@string/app_name" />
                 </FrameLayout>
 
                 <TextView
