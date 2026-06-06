@@ -12,6 +12,8 @@ import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import com.chorand.app.databinding.ActivityWebScraperBinding
 import kotlinx.coroutines.flow.collectLatest
@@ -59,6 +61,7 @@ class WebScraperActivity : AppCompatActivity() {
 
         scraperInterface = ScraperJsInterface(jsonlWriter)
 
+        applyStatusBarInset()
         setupMiniBar()
         setupWebView()
         observeEventCount()
@@ -132,6 +135,20 @@ class WebScraperActivity : AppCompatActivity() {
                 super.onLoadResource(view, url)
                 binding.progressBar.visibility = View.GONE
             }
+        }
+    }
+
+    /**
+     * Reads the real status bar height via WindowInsetsCompat and applies it
+     * as the height of the statusBarSpacer view, pushing the mini bar content
+     * below the system notification bar on all devices.
+     */
+    private fun applyStatusBarInset() {
+        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, insets ->
+            val statusBarHeight = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top
+            binding.statusBarSpacer.layoutParams =
+                binding.statusBarSpacer.layoutParams.also { it.height = statusBarHeight }
+            insets
         }
     }
 

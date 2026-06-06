@@ -9,83 +9,97 @@
     android:background="@color/bg_primary"
     tools:context=".WebScraperActivity">
 
-    <!-- Mini Recording Bar -->
+    <!-- Mini Recording Bar — height is 52dp + status bar inset applied in code -->
     <LinearLayout
         android:id="@+id/miniBar"
         android:layout_width="match_parent"
-        android:layout_height="52dp"
-        android:orientation="horizontal"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
         android:background="@color/bg_bar"
-        android:paddingStart="12dp"
-        android:paddingEnd="12dp"
-        android:gravity="center_vertical"
         android:elevation="8dp">
 
-        <!-- Recording dot (animated) -->
+        <!-- Status bar spacer — height set programmatically to statusBarHeight -->
         <View
-            android:id="@+id/recordingDot"
-            android:layout_width="10dp"
-            android:layout_height="10dp"
-            android:background="@drawable/bg_recording_dot"
-            android:layout_marginEnd="8dp" />
+            android:id="@+id/statusBarSpacer"
+            android:layout_width="match_parent"
+            android:layout_height="0dp" />
 
-        <!-- REC label -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="REC"
-            android:textSize="10sp"
-            android:textColor="@color/recording_red"
-            android:fontFamily="sans-serif-medium"
-            android:letterSpacing="0.1"
-            android:layout_marginEnd="12dp" />
-
-        <!-- Divider -->
-        <View
-            android:layout_width="1dp"
-            android:layout_height="20dp"
-            android:background="@color/border_default"
-            android:layout_marginEnd="12dp" />
-
-        <!-- URL being scraped -->
-        <TextView
-            android:id="@+id/tvCurrentUrl"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:textSize="12sp"
-            android:textColor="@color/text_secondary"
-            android:fontFamily="sans-serif"
-            android:maxLines="1"
-            android:ellipsize="middle"
-            tools:text="https://example.com" />
-
-        <!-- Event counter -->
-        <TextView
-            android:id="@+id/tvEventCount"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Events: 0"
-            android:textSize="12sp"
-            android:textColor="@color/accent_blue"
-            android:fontFamily="sans-serif-medium"
-            android:layout_marginStart="8dp"
-            android:layout_marginEnd="10dp"
-            tools:text="Events: 42" />
-
-        <!-- Stop button -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnStop"
-            android:layout_width="wrap_content"
-            android:layout_height="36dp"
-            android:text="STOP"
-            android:textSize="11sp"
-            android:fontFamily="sans-serif-medium"
+        <!-- Actual content row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:orientation="horizontal"
             android:paddingStart="12dp"
             android:paddingEnd="12dp"
-            app:backgroundTint="@color/error"
-            app:cornerRadius="10dp"
-            android:minWidth="0dp" />
+            android:gravity="center_vertical">
+
+            <!-- Recording dot -->
+            <View
+                android:id="@+id/recordingDot"
+                android:layout_width="10dp"
+                android:layout_height="10dp"
+                android:background="@drawable/bg_recording_dot"
+                android:layout_marginEnd="8dp" />
+
+            <!-- REC label -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="REC"
+                android:textSize="10sp"
+                android:textColor="@color/recording_red"
+                android:fontFamily="sans-serif-medium"
+                android:letterSpacing="0.1"
+                android:layout_marginEnd="12dp" />
+
+            <!-- Divider -->
+            <View
+                android:layout_width="1dp"
+                android:layout_height="20dp"
+                android:background="@color/border_default"
+                android:layout_marginEnd="12dp" />
+
+            <!-- URL being scraped -->
+            <TextView
+                android:id="@+id/tvCurrentUrl"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textSize="12sp"
+                android:textColor="@color/text_secondary"
+                android:fontFamily="sans-serif"
+                android:maxLines="1"
+                android:ellipsize="middle"
+                tools:text="https://example.com" />
+
+            <!-- Event counter -->
+            <TextView
+                android:id="@+id/tvEventCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Events: 0"
+                android:textSize="12sp"
+                android:textColor="@color/accent_blue"
+                android:fontFamily="sans-serif-medium"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="10dp"
+                tools:text="Events: 42" />
+
+            <!-- Stop button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnStop"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:text="STOP"
+                android:textSize="11sp"
+                android:fontFamily="sans-serif-medium"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                app:backgroundTint="@color/error"
+                app:cornerRadius="10dp"
+                android:minWidth="0dp" />
+
+        </LinearLayout>
 
     </LinearLayout>
 
