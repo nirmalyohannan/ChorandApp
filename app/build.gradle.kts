@@ -38,6 +38,23 @@ android {
     buildFeatures {
         viewBinding = true
     }
+
+    splits {
+        abi {
+            isEnable = true
+            reset()
+            include("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
+            isUniversalApk = true
+        }
+    }
+
+    applicationVariants.all {
+        outputs.forEach { output ->
+            val apkOutput = output as? com.android.build.gradle.api.ApkVariantOutput
+            val abi = output.filters.find { it.filterType == "ABI" }?.identifier ?: "universal"
+            apkOutput?.outputFileName = "ChorandApp-${abi}-${defaultConfig.versionName}.apk"
+        }
+    }
 }
 
 dependencies {
