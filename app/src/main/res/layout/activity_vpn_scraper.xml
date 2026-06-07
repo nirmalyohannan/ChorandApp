@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/bg_primary"
+    tools:context=".VpnScraperActivity">
+
+    <!-- Mini Recording Bar -->
+    <LinearLayout
+        android:id="@+id/miniBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@color/bg_bar"
+        android:elevation="8dp">
+
+        <!-- Status bar spacer -->
+        <View
+            android:id="@+id/statusBarSpacer"
+            android:layout_width="match_parent"
+            android:layout_height="0dp" />
+
+        <!-- Actual content row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:orientation="horizontal"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:gravity="center_vertical">
+
+            <!-- Recording dot -->
+            <View
+                android:id="@+id/recordingDot"
+                android:layout_width="10dp"
+                android:layout_height="10dp"
+                android:background="@drawable/bg_recording_dot"
+                android:layout_marginEnd="8dp" />
+
+            <!-- REC label -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="VPN"
+                android:textSize="10sp"
+                android:textColor="@color/recording_red"
+                android:fontFamily="sans-serif-medium"
+                android:letterSpacing="0.1"
+                android:layout_marginEnd="12dp" />
+
+            <!-- Divider -->
+            <View
+                android:layout_width="1dp"
+                android:layout_height="20dp"
+                android:background="@color/border_default"
+                android:layout_marginEnd="12dp" />
+
+            <!-- Current URL or Scope -->
+            <TextView
+                android:id="@+id/tvCurrentUrl"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textSize="12sp"
+                android:textColor="@color/text_secondary"
+                android:fontFamily="sans-serif"
+                android:maxLines="1"
+                android:ellipsize="middle"
+                android:text="Global Device Traffic" />
+
+            <!-- Event counter -->
+            <TextView
+                android:id="@+id/tvEventCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Events: 0"
+                android:textSize="12sp"
+                android:textColor="@color/accent_blue"
+                android:fontFamily="sans-serif-medium"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="10dp" />
+
+            <!-- Stop button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnStop"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:text="STOP"
+                android:textSize="11sp"
+                android:fontFamily="sans-serif-medium"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                app:backgroundTint="@color/error"
+                app:cornerRadius="10dp"
+                android:minWidth="0dp" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- VPN Info / Status Card -->
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        app:cardBackgroundColor="@color/bg_surface"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="0dp"
+        app:strokeColor="@color/border_default"
+        app:strokeWidth="1dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="8dp">
+
+                <!-- Pulsing active indicator -->
+                <View
+                    android:layout_width="12dp"
+                    android:layout_height="12dp"
+                    android:background="@drawable/bg_recording_dot"
+                    android:backgroundTint="@color/success"
+                    android:layout_marginEnd="8dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="VPN INTERCEPTOR ACTIVE"
+                    android:textSize="13sp"
+                    android:textColor="@color/success"
+                    android:fontFamily="sans-serif-medium"
+                    android:letterSpacing="0.1" />
+
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Routing local DNS queries to intercept target hosts. All other app data traffic continues directly over your internet connection securely and normally."
+                android:textSize="12sp"
+                android:textColor="@color/text_secondary"
+                android:fontFamily="sans-serif"
+                android:lineSpacingExtra="3sp" />
+
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- Header for events list -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="INTERCEPTED TRAFFIC LOG"
+        android:textSize="11sp"
+        android:textColor="@color/accent_blue"
+        android:fontFamily="sans-serif-medium"
+        android:letterSpacing="0.15"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="8dp" />
+
+    <!-- Live Event List -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvEvents"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:clipToPadding="false"
+        tools:listitem="@layout/item_event" />
+
+</LinearLayout>
