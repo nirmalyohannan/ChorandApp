@@ -59,6 +59,21 @@
                 android:background="@color/border_default"
                 android:layout_marginEnd="12dp" />
 
+            <!-- Back Page Button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnWebBack"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:padding="0dp"
+                android:minWidth="0dp"
+                android:minHeight="0dp"
+                app:icon="?attr/homeAsUpIndicator"
+                app:iconTint="@color/text_primary"
+                app:iconSize="20dp"
+                android:layout_marginEnd="8dp"
+                android:enabled="false" />
+
             <!-- URL being scraped -->
             <TextView
                 android:id="@+id/tvCurrentUrl"

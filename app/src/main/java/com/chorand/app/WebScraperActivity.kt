@@ -139,6 +139,17 @@ class WebScraperActivity : AppCompatActivity() {
                 view?.evaluateJavascript(scraperJs, null)
                 // Update address bar
                 binding.tvCurrentUrl.text = url ?: targetUrl
+                // Update back button state
+                val canGoBack = view?.canGoBack() ?: false
+                binding.btnWebBack.isEnabled = canGoBack
+                binding.btnWebBack.alpha = if (canGoBack) 1.0f else 0.35f
+            }
+
+            override fun doUpdateVisitedHistory(view: WebView?, url: String?, isReload: Boolean) {
+                super.doUpdateVisitedHistory(view, url, isReload)
+                val canGoBack = view?.canGoBack() ?: false
+                binding.btnWebBack.isEnabled = canGoBack
+                binding.btnWebBack.alpha = if (canGoBack) 1.0f else 0.35f
             }
 
             override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) {
@@ -172,14 +183,27 @@ class WebScraperActivity : AppCompatActivity() {
         binding.tvEventCount.text = "Events: 0"
         binding.tvCurrentUrl.text = targetUrl
 
+        binding.btnWebBack.isEnabled = false
+        binding.btnWebBack.alpha = 0.35f
+        binding.btnWebBack.setOnClickListener {
+            if (binding.webView.canGoBack()) {
+                binding.webView.goBack()
+            }
+        }
+
         binding.btnStop.setOnClickListener {
             showExitConfirmationDialog()
         }
 
-        // Intercept onBackPressed to show warning dialog
+        // Intercept onBackPressed to navigate back in web page history if possible,
+        // or show warning dialog otherwise.
         onBackPressedDispatcher.addCallback(this, object : androidx.activity.OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                showExitConfirmationDialog()
+                if (binding.webView.canGoBack()) {
+                    binding.webView.goBack()
+                } else {
+                    showExitConfirmationDialog()
+                }
             }
         })
     }
