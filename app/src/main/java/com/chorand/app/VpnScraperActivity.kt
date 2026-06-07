@@ -125,7 +125,10 @@ class VpnScraperActivity : AppCompatActivity() {
     }
 
     private fun stopScraping() {
-        stopService(Intent(this, LocalVpnService::class.java))
+        val stopIntent = Intent(this, LocalVpnService::class.java).apply {
+            action = LocalVpnService.ACTION_STOP
+        }
+        startService(stopIntent)
         val intent = Intent(this, SummaryActivity::class.java).apply {
             putExtra(SummaryActivity.EXTRA_URL, "Global VPN Capture")
             putExtra(SummaryActivity.EXTRA_FILE_PATH, filePath)

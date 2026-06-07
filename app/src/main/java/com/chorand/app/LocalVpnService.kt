@@ -28,6 +28,7 @@ class LocalVpnService : VpnService() {
     companion object {
         const val TAG = "LocalVpnService"
         const val EXTRA_FILE_PATH = "extra_file_path"
+        const val ACTION_STOP = "com.chorand.app.ACTION_STOP"
 
         val eventFlow = MutableSharedFlow<ApiEvent>(extraBufferCapacity = 100)
 
@@ -38,10 +39,17 @@ class LocalVpnService : VpnService() {
 
     private var vpnInterface: ParcelFileDescriptor? = null
     private var vpnThread: Thread? = null
+    private var inputStream: FileInputStream? = null
+    private var outputStream: FileOutputStream? = null
     private lateinit var jsonlWriter: JsonlWriter
     private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (intent?.action == ACTION_STOP) {
+            stopVpn()
+            return START_NOT_STICKY
+        }
+
         val filePath = intent?.getStringExtra(EXTRA_FILE_PATH) ?: return START_NOT_STICKY
         jsonlWriter = JsonlWriter(File(filePath))
 
@@ -103,29 +111,37 @@ class LocalVpnService : VpnService() {
 
     private fun runVpnLoop() {
         val fd = vpnInterface?.fileDescriptor ?: return
-        val inputStream = FileInputStream(fd)
-        val outputStream = FileOutputStream(fd)
+        inputStream = FileInputStream(fd)
+        outputStream = FileOutputStream(fd)
         val packet = ByteBuffer.allocate(32768)
 
         try {
             while (isRunning) {
                 packet.clear()
-                val read = inputStream.read(packet.array())
+                val read = inputStream?.read(packet.array()) ?: -1
                 if (read > 0) {
                     packet.limit(read)
-                    processPacket(packet, outputStream)
+                    outputStream?.let { processPacket(packet, it) }
+                } else if (read < 0) {
+                    break
                 }
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Error in VPN read loop", e)
+            Log.d(TAG, "VPN read loop stopped: ${e.message}")
         } finally {
-            try {
-                inputStream.close()
-            } catch (e: Exception) {}
-            try {
-                outputStream.close()
-            } catch (e: Exception) {}
+            closeStreams()
         }
+    }
+
+    private fun closeStreams() {
+        try {
+            inputStream?.close()
+        } catch (e: Exception) {}
+        inputStream = null
+        try {
+            outputStream?.close()
+        } catch (e: Exception) {}
+        outputStream = null
     }
 
     private fun processPacket(packet: ByteBuffer, outputStream: FileOutputStream) {
@@ -356,14 +372,37 @@ class LocalVpnService : VpnService() {
         return (sum.inv()) and 0xFFFF
     }
 
+    private fun stopVpn() {
+        isRunning = false
+        closeStreams()
+        try {
+            vpnInterface?.close()
+        } catch (e: Exception) {}
+        vpnInterface = null
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            stopForeground(STOP_FOREGROUND_REMOVE)
+        } else {
+            @Suppress("DEPRECATION")
+            stopForeground(true)
+        }
+
+        stopSelf()
+    }
+
     override fun onDestroy() {
         isRunning = false
-        vpnInterface?.close()
+        closeStreams()
+        try {
+            vpnInterface?.close()
+        } catch (e: Exception) {}
         vpnInterface = null
         vpnThread?.interrupt()
         vpnThread = null
         serviceScope.launch {
-            jsonlWriter.close()
+            try {
+                jsonlWriter.close()
+            } catch (e: Exception) {}
         }
         super.onDestroy()
     }
