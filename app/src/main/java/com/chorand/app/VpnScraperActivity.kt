@@ -54,7 +54,9 @@ class VpnScraperActivity : AppCompatActivity() {
     private fun setupUI() {
         binding.tvEventCount.text = "Events: 0"
 
-        eventAdapter = EventAdapter(capturedEvents)
+        eventAdapter = EventAdapter(capturedEvents) { event ->
+            EventDetailBottomSheet.newInstance(event).show(supportFragmentManager, "EventDetail")
+        }
         binding.rvEvents.layoutManager = LinearLayoutManager(this)
         binding.rvEvents.adapter = eventAdapter
 

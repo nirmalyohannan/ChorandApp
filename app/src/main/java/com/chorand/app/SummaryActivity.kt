@@ -165,7 +165,9 @@ class SummaryActivity : AppCompatActivity() {
                     binding.tvLastEvent.text = dateFormat.format(Date(it))
                 }
 
-                val adapter = EventAdapter(events.takeLast(50).reversed())
+                val adapter = EventAdapter(events.takeLast(50).reversed()) { event ->
+                    EventDetailBottomSheet.newInstance(event).show(supportFragmentManager, "EventDetail")
+                }
                 binding.rvEvents.adapter = adapter
             }
         }

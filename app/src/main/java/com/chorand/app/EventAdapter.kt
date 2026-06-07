@@ -8,7 +8,10 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-class EventAdapter(private val events: List<ApiEvent>) :
+class EventAdapter(
+    private val events: List<ApiEvent>,
+    private val onEventClick: (ApiEvent) -> Unit
+) :
     RecyclerView.Adapter<EventAdapter.EventViewHolder>() {
 
     private val timeFormat = SimpleDateFormat("HH:mm:ss.SSS", Locale.getDefault())
@@ -28,6 +31,10 @@ class EventAdapter(private val events: List<ApiEvent>) :
     override fun onBindViewHolder(holder: EventViewHolder, position: Int) {
         val event = events[position]
         val ctx = holder.binding.root.context
+
+        holder.binding.root.setOnClickListener {
+            onEventClick(event)
+        }
 
         with(holder.binding) {
             // Type badge
