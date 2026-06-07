@@ -1,0 +1,44 @@
+name: Build and Release split APKs
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+
+      - name: Build Release APKs
+        run: ./gradlew :app:assembleRelease
+
+      - name: Create Release and Upload Assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            app/build/outputs/apk/release/ChorandApp-universal-*.apk
+            app/build/outputs/apk/release/ChorandApp-arm64-v8a-*.apk
+            app/build/outputs/apk/release/ChorandApp-armeabi-v7a-*.apk
+            app/build/outputs/apk/release/ChorandApp-x86-*.apk
+            app/build/outputs/apk/release/ChorandApp-x86_64-*.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
