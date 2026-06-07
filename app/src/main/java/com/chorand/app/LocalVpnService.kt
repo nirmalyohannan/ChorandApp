@@ -198,7 +198,13 @@ class LocalVpnService : VpnService() {
         val dnsPayload = ByteArray(dnsLen)
         System.arraycopy(buffer, dnsOffset, dnsPayload, 0, dnsLen)
 
-        forwardDnsQuery(domainName, srcPort, destPort, buffer, ihl, dnsPayload, outputStream)
+        // Copy client and DNS server IP bytes synchronously to prevent concurrency buffer corruption
+        val clientIp = ByteArray(4)
+        System.arraycopy(buffer, 12, clientIp, 0, 4)
+        val dnsIp = ByteArray(4)
+        System.arraycopy(buffer, 16, dnsIp, 0, 4)
+
+        forwardDnsQuery(domainName, srcPort, destPort, clientIp, dnsIp, dnsPayload, outputStream)
     }
 
     private fun logDnsEvent(domain: String) {
@@ -225,8 +231,8 @@ class LocalVpnService : VpnService() {
         domain: String,
         clientUdpPort: Int,
         dnsPort: Int,
-        originalBuffer: ByteArray,
-        ihl: Int,
+        clientIp: ByteArray,
+        dnsIp: ByteArray,
         dnsPayload: ByteArray,
         outputStream: FileOutputStream
     ) {
@@ -241,12 +247,22 @@ class LocalVpnService : VpnService() {
                 protect(socket) // Exclude from VPN routing to avoid infinite recursion
                 socket.soTimeout = 3000
 
-                // Attempt to query the active network's DNS server dynamically, falling back to 8.8.8.8
+                // Query non-VPN physical networks' DNS servers, falling back to 8.8.8.8
                 val activeDns = try {
                     val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-                    val activeNetwork = connectivityManager.activeNetwork
-                    val linkProperties = connectivityManager.getLinkProperties(activeNetwork)
-                    linkProperties?.dnsServers?.firstOrNull { it is java.net.Inet4Address }
+                    var dnsResolverAddress: InetAddress? = null
+                    for (network in connectivityManager.allNetworks) {
+                        val caps = connectivityManager.getNetworkCapabilities(network)
+                        if (caps != null && !caps.hasTransport(android.net.NetworkCapabilities.TRANSPORT_VPN)) {
+                            val lp = connectivityManager.getLinkProperties(network)
+                            val ipAddress = lp?.dnsServers?.firstOrNull { it is java.net.Inet4Address }
+                            if (ipAddress != null) {
+                                dnsResolverAddress = ipAddress
+                                break
+                            }
+                        }
+                    }
+                    dnsResolverAddress
                 } catch (e: Exception) {
                     null
                 }
@@ -319,9 +335,9 @@ class LocalVpnService : VpnService() {
             responsePacket[9] = 17.toByte()
 
             // Source IP of response = Destination IP of query (DNS Server, e.g. 10.0.0.2)
-            System.arraycopy(originalBuffer, 16, responsePacket, 12, 4)
+            System.arraycopy(dnsIp, 0, responsePacket, 12, 4)
             // Destination IP of response = Source IP of query (Client, e.g. 10.0.0.1)
-            System.arraycopy(originalBuffer, 12, responsePacket, 16, 4)
+            System.arraycopy(clientIp, 0, responsePacket, 16, 4)
 
             // Calculate IP Checksum (zero field first)
             responsePacket[10] = 0
@@ -345,11 +361,13 @@ class LocalVpnService : VpnService() {
 
             System.arraycopy(responseDnsPayload, 0, responsePacket, udpOffset + 8, responseDnsPayload.size)
 
-            try {
-                outputStream.write(responsePacket)
-                outputStream.flush()
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to write DNS response packet", e)
+            synchronized(outputStream) {
+                try {
+                    outputStream.write(responsePacket)
+                    outputStream.flush()
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to write DNS response packet", e)
+                }
             }
         }
     }
