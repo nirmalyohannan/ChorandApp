@@ -110,7 +110,20 @@
         var startTime = Date.now();
         var url = (input instanceof Request) ? input.url : String(input);
         var method = (init && init.method) || (input instanceof Request && input.method) || 'GET';
-        var requestHeaders = headersToObject((init && init.headers) || (input instanceof Request && input.headers));
+
+        // Merge custom headers
+        init = init || {};
+        var originalHeaders = (init.headers) || (input instanceof Request && input.headers);
+        var requestHeaders = headersToObject(originalHeaders);
+        if (window.ChorandCustomHeaders) {
+            for (var key in window.ChorandCustomHeaders) {
+                if (window.ChorandCustomHeaders.hasOwnProperty(key)) {
+                    requestHeaders[key] = window.ChorandCustomHeaders[key];
+                }
+            }
+        }
+        init.headers = requestHeaders;
+
         var requestBody = extractRequestBody((init && init.body) || (input instanceof Request && input.body));
 
         // Report the outgoing request
@@ -123,7 +136,7 @@
             timestamp: startTime
         });
 
-        return _originalFetch.apply(this, arguments).then(function (response) {
+        return _originalFetch.call(this, input, init).then(function (response) {
             var durationMs = Date.now() - startTime;
             var cloned = response.clone();
             var responseHeaders = headersToObject(cloned.headers);
@@ -196,6 +209,17 @@
 
         xhr.send = function (body) {
             _startTime = Date.now();
+
+            // Set custom headers on the actual XHR request
+            if (window.ChorandCustomHeaders) {
+                for (var key in window.ChorandCustomHeaders) {
+                    if (window.ChorandCustomHeaders.hasOwnProperty(key)) {
+                        _originalSetHeader(key, window.ChorandCustomHeaders[key]);
+                        _requestHeaders[key] = window.ChorandCustomHeaders[key];
+                    }
+                }
+            }
+
             var requestBody = extractRequestBody(body);
 
             safeSend('onRequest', {

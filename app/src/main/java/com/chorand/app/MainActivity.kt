@@ -110,6 +110,17 @@ class MainActivity : AppCompatActivity() {
             pickFileLauncher.launch("*/*")
         }
 
+        binding.btnAdvanced.setOnClickListener {
+            val isVisible = binding.layoutAdvanced.visibility == View.VISIBLE
+            binding.layoutAdvanced.visibility = if (isVisible) View.GONE else View.VISIBLE
+            binding.btnAdvanced.text = if (isVisible) "⚙️ Advanced Settings" else "⚙️ Hide Settings"
+        }
+
+        binding.btnResetAdvanced.setOnClickListener {
+            binding.etUserAgent.setText("")
+            binding.etCustomHeaders.setText("")
+        }
+
         // Initialize state
         setWebMode(true)
     }
@@ -192,10 +203,15 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun launchWebScraper(url: String, filePath: String, resume: Boolean) {
+        val customUserAgent = binding.etUserAgent.text?.toString()?.trim() ?: ""
+        val customHeaders = binding.etCustomHeaders.text?.toString()?.trim() ?: ""
+
         val intent = Intent(this, WebScraperActivity::class.java).apply {
             putExtra(WebScraperActivity.EXTRA_URL, url)
             putExtra(WebScraperActivity.EXTRA_FILE_PATH, filePath)
             putExtra(WebScraperActivity.EXTRA_RESUME, resume)
+            putExtra(WebScraperActivity.EXTRA_USER_AGENT, customUserAgent)
+            putExtra(WebScraperActivity.EXTRA_CUSTOM_HEADERS, customHeaders)
         }
         startActivity(intent)
     }

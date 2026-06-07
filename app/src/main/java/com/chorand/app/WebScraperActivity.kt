@@ -26,6 +26,8 @@ class WebScraperActivity : AppCompatActivity() {
         const val EXTRA_URL = "extra_url"
         const val EXTRA_FILE_PATH = "extra_file_path"
         const val EXTRA_RESUME = "extra_resume"
+        const val EXTRA_USER_AGENT = "extra_user_agent"
+        const val EXTRA_CUSTOM_HEADERS = "extra_custom_headers"
 
         // A realistic modern Chrome UA on Android
         private const val CHROME_USER_AGENT =
@@ -42,6 +44,8 @@ class WebScraperActivity : AppCompatActivity() {
     private var targetUrl = ""
     private var filePath = ""
     private var isResume = false
+    private var customUserAgent = ""
+    private var customHeadersString = ""
     private var scraperJs = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -52,12 +56,19 @@ class WebScraperActivity : AppCompatActivity() {
         targetUrl = intent.getStringExtra(EXTRA_URL) ?: ""
         filePath = intent.getStringExtra(EXTRA_FILE_PATH) ?: ""
         isResume = intent.getBooleanExtra(EXTRA_RESUME, false)
+        customUserAgent = intent.getStringExtra(EXTRA_USER_AGENT) ?: ""
+        customHeadersString = intent.getStringExtra(EXTRA_CUSTOM_HEADERS) ?: ""
 
         sessionManager = SessionManager(this)
         jsonlWriter = JsonlWriter(File(filePath))
 
+        // Parse custom headers, build JSON window variable injection, and prepend it to scraperJs
+        val headersMap = parseHeaders(customHeadersString)
+        val headersJson = com.google.gson.Gson().toJson(headersMap)
+        val customHeadersJsInject = "window.ChorandCustomHeaders = $headersJson;\n"
+
         // Load the JS injector from assets
-        scraperJs = assets.open("scraper_injector.js").bufferedReader().readText()
+        scraperJs = customHeadersJsInject + assets.open("scraper_injector.js").bufferedReader().readText()
 
         scraperInterface = ScraperJsInterface(jsonlWriter)
 
@@ -70,7 +81,12 @@ class WebScraperActivity : AppCompatActivity() {
         lifecycleScope.launch {
             jsonlWriter.open()
             sessionManager.saveSession(targetUrl, filePath, jsonlWriter.eventCount)
-            binding.webView.loadUrl(targetUrl)
+            val headersMap = parseHeaders(customHeadersString)
+            if (headersMap.isNotEmpty()) {
+                binding.webView.loadUrl(targetUrl, headersMap)
+            } else {
+                binding.webView.loadUrl(targetUrl)
+            }
         }
     }
 
@@ -82,7 +98,7 @@ class WebScraperActivity : AppCompatActivity() {
             javaScriptEnabled = true
             domStorageEnabled = true
             databaseEnabled = true
-            userAgentString = CHROME_USER_AGENT
+            userAgentString = if (customUserAgent.isNotEmpty()) customUserAgent else CHROME_USER_AGENT
             allowContentAccess = true
             allowFileAccess = true
             @Suppress("DEPRECATION")
@@ -214,5 +230,20 @@ class WebScraperActivity : AppCompatActivity() {
         super.onDestroy()
         lifecycleScope.launch { jsonlWriter.close() }
         binding.webView.destroy()
+    }
+
+    private fun parseHeaders(headersStr: String): Map<String, String> {
+        val map = mutableMapOf<String, String>()
+        headersStr.split("\n").forEach { line ->
+            val parts = line.split(":", limit = 2)
+            if (parts.size == 2) {
+                val key = parts[0].trim()
+                val value = parts[1].trim()
+                if (key.isNotEmpty() && value.isNotEmpty()) {
+                    map[key] = value
+                }
+            }
+        }
+        return map
     }
 }

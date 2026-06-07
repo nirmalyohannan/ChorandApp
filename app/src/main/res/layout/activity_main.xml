@@ -173,6 +173,109 @@
                         android:fontFamily="sans-serif"
                         android:layout_marginTop="10dp" />
 
+                    <!-- Advanced Settings Toggle -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnAdvanced"
+                        style="@style/Widget.MaterialComponents.Button.TextButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="⚙️ Advanced Settings"
+                        android:textColor="@color/accent_blue"
+                        android:textSize="12sp"
+                        android:layout_marginTop="8dp"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:padding="0dp" />
+
+                    <!-- Expandable Advanced Layout -->
+                    <LinearLayout
+                        android:id="@+id/layoutAdvanced"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:visibility="gone"
+                        android:layout_marginTop="12dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="CUSTOM USER AGENT"
+                            android:textSize="10sp"
+                            android:textColor="@color/text_secondary"
+                            android:fontFamily="sans-serif-medium"
+                            android:letterSpacing="0.1"
+                            android:layout_marginBottom="6dp" />
+
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/tilUserAgent"
+                            style="@style/ChorandTextInputLayout"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            app:boxStrokeColor="@color/accent_blue"
+                            app:hintTextColor="@color/text_secondary"
+                            android:hint="Default User Agent">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/etUserAgent"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:inputType="textLongMessage"
+                                android:textColor="@color/text_primary"
+                                android:textSize="13sp"
+                                android:fontFamily="sans-serif" />
+
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="CUSTOM HEADERS (Key: Value per line)"
+                            android:textSize="10sp"
+                            android:textColor="@color/text_secondary"
+                            android:fontFamily="sans-serif-medium"
+                            android:letterSpacing="0.1"
+                            android:layout_marginTop="12dp"
+                            android:layout_marginBottom="6dp" />
+
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/tilCustomHeaders"
+                            style="@style/ChorandTextInputLayout"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            app:boxStrokeColor="@color/accent_blue"
+                            app:hintTextColor="@color/text_secondary"
+                            android:hint="X-My-Header: CustomValue">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/etCustomHeaders"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:inputType="textMultiLine"
+                                android:gravity="top|start"
+                                android:minLines="3"
+                                android:textColor="@color/text_primary"
+                                android:textSize="13sp"
+                                android:fontFamily="sans-serif" />
+
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                        <!-- Reset Button -->
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnResetAdvanced"
+                            style="@style/Widget.MaterialComponents.Button.TextButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="🔄 Reset Defaults"
+                            android:textColor="@color/error"
+                            android:textSize="12sp"
+                            android:layout_gravity="end"
+                            android:layout_marginTop="8dp"
+                            android:insetTop="0dp"
+                            android:insetBottom="0dp"
+                            android:padding="0dp" />
+
+                    </LinearLayout>
+
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
