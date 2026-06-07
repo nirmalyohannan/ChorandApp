@@ -29,6 +29,14 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private val pickFileLauncher = registerForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.GetContent()
+    ) { uri ->
+        if (uri != null) {
+            importAndOpenCapture(uri)
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -96,6 +104,10 @@ class MainActivity : AppCompatActivity() {
             } else {
                 prepareAndStartVpn(resume = false)
             }
+        }
+
+        binding.btnImport.setOnClickListener {
+            pickFileLauncher.launch("*/*")
         }
 
         // Initialize state
@@ -236,5 +248,77 @@ class MainActivity : AppCompatActivity() {
             bytes < 1024 * 1024 -> "${"%.1f".format(bytes / 1024.0)} KB"
             else -> "${"%.2f".format(bytes / (1024.0 * 1024.0))} MB"
         }
+    }
+
+    private fun importAndOpenCapture(uri: android.net.Uri) {
+        val captureDir = File(filesDir, "captures")
+        captureDir.mkdirs()
+        val localFile = File(captureDir, "imported_${System.currentTimeMillis()}.jsonl")
+
+        try {
+            contentResolver.openInputStream(uri)?.use { input ->
+                localFile.outputStream().use { output ->
+                    input.copyTo(output)
+                }
+            }
+
+            var validEventCount = 0
+            var hasParsingError = false
+            if (localFile.exists() && localFile.length() > 0) {
+                val gson = com.google.gson.Gson()
+                localFile.forEachLine { line ->
+                    if (line.isNotBlank()) {
+                        try {
+                            // Check if it is a JSON object with at least some expected keys to make validation stronger
+                            val event = gson.fromJson(line, ApiEvent::class.java)
+                            if (event.type.isNotEmpty()) {
+                                validEventCount++
+                            } else {
+                                hasParsingError = true
+                            }
+                        } catch (e: Exception) {
+                            hasParsingError = true
+                        }
+                    }
+                }
+            }
+
+            if (validEventCount == 0) {
+                localFile.delete()
+                showErrorDialog("Invalid Capture File", "The selected file contains no valid Chorand API capture events.")
+            } else if (hasParsingError) {
+                AlertDialog.Builder(this, R.style.ChorandAlertDialog)
+                    .setTitle("Import Warnings")
+                    .setMessage("The capture file was opened, but some entries could not be parsed and were skipped. Do you want to proceed?")
+                    .setPositiveButton("Open Anyway") { _, _ ->
+                        openSummaryActivity(localFile.absolutePath, "N/A")
+                    }
+                    .setNegativeButton("Cancel") { _, _ ->
+                        localFile.delete()
+                    }
+                    .show()
+            } else {
+                openSummaryActivity(localFile.absolutePath, "N/A")
+            }
+        } catch (e: Exception) {
+            if (localFile.exists()) localFile.delete()
+            showErrorDialog("Import Failed", "Failed to open or copy the selected file: ${e.message}")
+        }
+    }
+
+    private fun showErrorDialog(title: String, message: String) {
+        AlertDialog.Builder(this, R.style.ChorandAlertDialog)
+            .setTitle(title)
+            .setMessage(message)
+            .setPositiveButton("OK", null)
+            .show()
+    }
+
+    private fun openSummaryActivity(filePath: String, url: String) {
+        val intent = Intent(this, SummaryActivity::class.java).apply {
+            putExtra(SummaryActivity.EXTRA_FILE_PATH, filePath)
+            putExtra(SummaryActivity.EXTRA_URL, url)
+        }
+        startActivity(intent)
     }
 }

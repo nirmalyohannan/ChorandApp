@@ -101,7 +101,12 @@ class SummaryActivity : AppCompatActivity() {
     }
 
     private fun setupUI() {
-        binding.tvUrl.text = targetUrl
+        if (targetUrl.isNullOrEmpty() || targetUrl == "N/A") {
+            binding.tvUrl.visibility = View.GONE
+        } else {
+            binding.tvUrl.text = targetUrl
+            binding.tvUrl.visibility = View.VISIBLE
+        }
 
         binding.btnSaveToDownloads.setOnClickListener { saveToDownloads() }
         binding.btnShare.setOnClickListener { shareFile() }
