@@ -46,6 +46,10 @@
             android:name=".SummaryActivity"
             android:exported="false" />
 
+        <activity
+            android:name=".GroupedEventsActivity"
+            android:exported="false" />
+
         <service
             android:name=".LocalVpnService"
             android:permission="android.permission.BIND_VPN_SERVICE"

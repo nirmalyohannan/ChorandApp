@@ -420,6 +420,54 @@
 
                 </com.google.android.material.card.MaterialCardView>
 
+                <!-- Group By Option -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginTop="16dp"
+                    android:layout_marginBottom="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Group Events By:"
+                        android:textSize="13sp"
+                        android:textColor="@color/text_secondary"
+                        android:fontFamily="sans-serif-medium"
+                        android:layout_marginEnd="16dp" />
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/tilGroup"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        app:boxBackgroundColor="@color/bg_surface"
+                        app:boxStrokeColor="@color/border_default"
+                        app:hintEnabled="false"
+                        app:boxCornerRadiusTopStart="12dp"
+                        app:boxCornerRadiusTopEnd="12dp"
+                        app:boxCornerRadiusBottomStart="12dp"
+                        app:boxCornerRadiusBottomEnd="12dp">
+
+                        <AutoCompleteTextView
+                            android:id="@+id/actvGroup"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="none"
+                            android:textColor="@color/text_primary"
+                            android:textSize="13sp"
+                            android:paddingTop="12dp"
+                            android:paddingBottom="12dp"
+                            android:fontFamily="sans-serif"
+                            android:text="None" />
+
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                </LinearLayout>
+
                 <!-- Events list header -->
                 <TextView
                     android:layout_width="wrap_content"

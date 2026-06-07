@@ -1,5 +1,7 @@
 package com.chorand.app
 
+import java.io.Serializable
+
 /**
  * Represents a single intercepted network event (request, response, or error)
  * captured from the WebView's JavaScript bridge.
@@ -19,4 +21,4 @@ data class ApiEvent(
     val durationMs: Long? = null,
     val error: String? = null,
     val initiator: String? = null               // "fetch" | "xhr"
-)
+) : Serializable

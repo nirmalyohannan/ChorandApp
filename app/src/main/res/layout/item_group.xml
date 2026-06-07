@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    app:cardBackgroundColor="@color/bg_surface"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="0dp"
+    app:strokeColor="@color/border_default"
+    app:strokeWidth="1dp"
+    android:layout_marginBottom="8dp"
+    android:clickable="true"
+    android:focusable="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:padding="16dp">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:layout_marginEnd="16dp">
+
+            <!-- Group Key/Title -->
+            <TextView
+                android:id="@+id/tvGroupTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="14sp"
+                android:textColor="@color/text_primary"
+                android:fontFamily="sans-serif-medium"
+                android:maxLines="2"
+                android:ellipsize="middle"
+                tools:text="api.github.com" />
+
+            <!-- Group Description (e.g. "Grouped by Domain") -->
+            <TextView
+                android:id="@+id/tvGroupDescription"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="11sp"
+                android:textColor="@color/text_tertiary"
+                android:fontFamily="sans-serif"
+                android:layout_marginTop="4dp"
+                tools:text="Grouped by Domain" />
+
+        </LinearLayout>
+
+        <!-- Count Badge -->
+        <TextView
+            android:id="@+id/tvGroupCount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_badge"
+            android:backgroundTint="@color/accent_blue"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp"
+            android:textSize="11sp"
+            android:textColor="@android:color/white"
+            android:fontFamily="sans-serif-medium"
+            android:layout_marginEnd="12dp"
+            tools:text="42 events" />
+
+        <!-- Chevron -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="→"
+            android:textSize="18sp"
+            android:textColor="@color/text_tertiary"
+            android:fontFamily="sans-serif-medium" />
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

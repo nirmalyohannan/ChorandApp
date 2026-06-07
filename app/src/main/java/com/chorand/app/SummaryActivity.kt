@@ -4,6 +4,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
+import android.widget.ArrayAdapter
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
@@ -30,6 +31,7 @@ class SummaryActivity : AppCompatActivity() {
     private lateinit var binding: ActivitySummaryBinding
     private lateinit var sessionManager: SessionManager
     private val gson = Gson()
+    private val allEvents = mutableListOf<ApiEvent>()
 
     private var targetUrl = ""
     private var filePath = ""
@@ -140,6 +142,9 @@ class SummaryActivity : AppCompatActivity() {
             val dateFormat = SimpleDateFormat("MMM d, yyyy HH:mm:ss", Locale.getDefault())
 
             withContext(Dispatchers.Main) {
+                allEvents.clear()
+                allEvents.addAll(events)
+
                 binding.loadingGroup.visibility = View.GONE
                 binding.contentGroup.visibility = View.VISIBLE
 
@@ -165,10 +170,7 @@ class SummaryActivity : AppCompatActivity() {
                     binding.tvLastEvent.text = dateFormat.format(Date(it))
                 }
 
-                val adapter = EventAdapter(events.takeLast(50).reversed()) { event ->
-                    EventDetailBottomSheet.newInstance(event).show(supportFragmentManager, "EventDetail")
-                }
-                binding.rvEvents.adapter = adapter
+                setupGroupingSelector()
             }
         }
     }
@@ -229,5 +231,105 @@ class SummaryActivity : AppCompatActivity() {
         bytes < 1024 -> "$bytes B"
         bytes < 1024 * 1024 -> "${"%.1f".format(bytes / 1024.0)} KB"
         else -> "${"%.2f".format(bytes / (1024.0 * 1024.0))} MB"
+    }
+
+    private fun setupGroupingSelector() {
+        val options = arrayOf("None", "Domain", "Endpoint", "Status", "HTTP Method")
+        val adapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, options)
+        binding.actvGroup.setAdapter(adapter)
+        binding.actvGroup.setOnItemClickListener { _, _, position, _ ->
+            applyGrouping(options[position])
+        }
+        applyGrouping("None")
+    }
+
+    private fun applyGrouping(option: String) {
+        when (option) {
+            "None" -> {
+                val adapter = EventAdapter(allEvents.reversed()) { event ->
+                    EventDetailBottomSheet.newInstance(event).show(supportFragmentManager, "EventDetail")
+                }
+                binding.rvEvents.adapter = adapter
+            }
+            "Domain" -> {
+                val grouped = allEvents.groupBy { getDomain(it.url) }
+                val groupList = grouped.map { (domain, events) ->
+                    EventGroup(domain, "Grouped by Domain", events)
+                }.sortedByDescending { it.events.size }
+                val adapter = GroupAdapter(groupList) { group ->
+                    openGroupDetail(group, "Domain")
+                }
+                binding.rvEvents.adapter = adapter
+            }
+            "Endpoint" -> {
+                val grouped = allEvents.groupBy { getEndpoint(it.url) }
+                val groupList = grouped.map { (endpoint, events) ->
+                    EventGroup(endpoint, "Grouped by Endpoint", events)
+                }.sortedByDescending { it.events.size }
+                val adapter = GroupAdapter(groupList) { group ->
+                    openGroupDetail(group, "Endpoint")
+                }
+                binding.rvEvents.adapter = adapter
+            }
+            "Status" -> {
+                val grouped = allEvents.groupBy { getStatusKey(it) }
+                val groupList = grouped.map { (status, events) ->
+                    EventGroup(status, "Grouped by Status", events)
+                }.sortedByDescending { it.events.size }
+                val adapter = GroupAdapter(groupList) { group ->
+                    openGroupDetail(group, "Status")
+                }
+                binding.rvEvents.adapter = adapter
+            }
+            "HTTP Method" -> {
+                val grouped = allEvents.groupBy { getMethodKey(it) }
+                val groupList = grouped.map { (method, events) ->
+                    EventGroup(method, "Grouped by HTTP Method", events)
+                }.sortedByDescending { it.events.size }
+                val adapter = GroupAdapter(groupList) { group ->
+                    openGroupDetail(group, "HTTP Method")
+                }
+                binding.rvEvents.adapter = adapter
+            }
+        }
+    }
+
+    private fun openGroupDetail(group: EventGroup, type: String) {
+        val intent = Intent(this, GroupedEventsActivity::class.java).apply {
+            putExtra(GroupedEventsActivity.EXTRA_TITLE, group.key)
+            putExtra(GroupedEventsActivity.EXTRA_TYPE, type)
+            putExtra(GroupedEventsActivity.EXTRA_EVENTS, ArrayList(group.events))
+        }
+        startActivity(intent)
+    }
+
+    private fun getDomain(url: String): String {
+        return try {
+            val uri = java.net.URI(url)
+            uri.host ?: url
+        } catch (e: Exception) {
+            url
+        }
+    }
+
+    private fun getEndpoint(url: String): String {
+        return try {
+            val uri = java.net.URI(url)
+            uri.path ?: "/"
+        } catch (e: Exception) {
+            url
+        }
+    }
+
+    private fun getStatusKey(event: ApiEvent): String {
+        return when {
+            event.status != null -> "${event.status} ${event.statusText ?: ""}"
+            event.error != null -> "Error: ${event.error}"
+            else -> "Pending"
+        }
+    }
+
+    private fun getMethodKey(event: ApiEvent): String {
+        return event.method ?: "CONNECT"
     }
 }
