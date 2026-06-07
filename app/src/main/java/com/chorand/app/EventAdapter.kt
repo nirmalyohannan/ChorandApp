@@ -9,10 +9,17 @@ import java.util.Date
 import java.util.Locale
 
 class EventAdapter(
-    private val events: List<ApiEvent>,
+    private var events: List<ApiEvent>,
     private val onEventClick: (ApiEvent) -> Unit
 ) :
     RecyclerView.Adapter<EventAdapter.EventViewHolder>() {
+
+    fun getEventAt(position: Int): ApiEvent = events[position]
+
+    fun updateEvents(newEvents: List<ApiEvent>) {
+        this.events = newEvents
+        notifyDataSetChanged()
+    }
 
     private val timeFormat = SimpleDateFormat("HH:mm:ss.SSS", Locale.getDefault())
 

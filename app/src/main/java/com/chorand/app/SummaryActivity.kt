@@ -8,7 +8,14 @@ import android.widget.ArrayAdapter
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.Rect
+import android.graphics.RectF
+import androidx.core.content.ContextCompat
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.chorand.app.databinding.ActivitySummaryBinding
 import com.google.gson.Gson
 import kotlinx.coroutines.CoroutineScope
@@ -48,6 +55,12 @@ class SummaryActivity : AppCompatActivity() {
 
         setupEdgeToEdge()
         setupUI()
+        setupGroupingSelector()
+        setupSwipeToDelete()
+    }
+
+    override fun onResume() {
+        super.onResume()
         loadSummary()
     }
 
@@ -170,7 +183,8 @@ class SummaryActivity : AppCompatActivity() {
                     binding.tvLastEvent.text = dateFormat.format(Date(it))
                 }
 
-                setupGroupingSelector()
+                val currentGroupOption = binding.actvGroup.text.toString()
+                applyGrouping(currentGroupOption)
             }
         }
     }
@@ -240,7 +254,6 @@ class SummaryActivity : AppCompatActivity() {
         binding.actvGroup.setOnItemClickListener { _, _, position, _ ->
             applyGrouping(options[position])
         }
-        applyGrouping("None")
     }
 
     private fun applyGrouping(option: String) {
@@ -299,6 +312,7 @@ class SummaryActivity : AppCompatActivity() {
             putExtra(GroupedEventsActivity.EXTRA_TITLE, group.key)
             putExtra(GroupedEventsActivity.EXTRA_TYPE, type)
             putExtra(GroupedEventsActivity.EXTRA_EVENTS, ArrayList(group.events))
+            putExtra(EXTRA_FILE_PATH, filePath)
         }
         startActivity(intent)
     }
@@ -331,5 +345,166 @@ class SummaryActivity : AppCompatActivity() {
 
     private fun getMethodKey(event: ApiEvent): String {
         return event.method ?: "CONNECT"
+    }
+
+    private fun setupSwipeToDelete() {
+        val itemTouchHelperCallback = object : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT) {
+            override fun onMove(
+                recyclerView: RecyclerView,
+                viewHolder: RecyclerView.ViewHolder,
+                target: RecyclerView.ViewHolder
+            ): Boolean = false
+
+            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+                val position = viewHolder.bindingAdapterPosition
+                val adapter = binding.rvEvents.adapter
+                if (adapter is EventAdapter) {
+                    val event = adapter.getEventAt(position)
+                    allEvents.remove(event)
+                    saveEventsToFile()
+                    updateStats()
+                    val currentGroupOption = binding.actvGroup.text.toString()
+                    applyGrouping(currentGroupOption)
+                } else if (adapter is GroupAdapter) {
+                    val group = adapter.getGroupAt(position)
+                    allEvents.removeAll(group.events)
+                    saveEventsToFile()
+                    updateStats()
+                    val currentGroupOption = binding.actvGroup.text.toString()
+                    applyGrouping(currentGroupOption)
+                }
+            }
+
+            override fun onChildDraw(
+                c: Canvas,
+                recyclerView: RecyclerView,
+                viewHolder: RecyclerView.ViewHolder,
+                dX: Float,
+                dY: Float,
+                actionState: Int,
+                isCurrentlyActive: Boolean
+            ) {
+                if (actionState == ItemTouchHelper.ACTION_STATE_SWIPE) {
+                    val itemView = viewHolder.itemView
+                    val paint = Paint()
+                    paint.color = ContextCompat.getColor(recyclerView.context, R.color.error)
+
+                    val background: RectF
+                    val iconDest: Rect
+                    val deleteIcon = ContextCompat.getDrawable(recyclerView.context, R.drawable.ic_delete)
+
+                    if (deleteIcon != null) {
+                        val iconMargin = (itemView.height - deleteIcon.intrinsicHeight) / 2
+                        val iconTop = itemView.top + iconMargin
+                        val iconBottom = iconTop + deleteIcon.intrinsicHeight
+
+                        if (dX > 0) { // Swiping right
+                            background = RectF(
+                                itemView.left.toFloat(),
+                                itemView.top.toFloat(),
+                                itemView.left.toFloat() + dX,
+                                itemView.bottom.toFloat()
+                            )
+                            c.drawRect(background, paint)
+
+                            val iconLeft = itemView.left + iconMargin
+                            val iconRight = iconLeft + deleteIcon.intrinsicWidth
+                            iconDest = Rect(iconLeft, iconTop, iconRight, iconBottom)
+                            deleteIcon.bounds = iconDest
+                            deleteIcon.draw(c)
+                        } else if (dX < 0) { // Swiping left
+                            background = RectF(
+                                itemView.right.toFloat() + dX,
+                                itemView.top.toFloat(),
+                                itemView.right.toFloat(),
+                                itemView.bottom.toFloat()
+                            )
+                            c.drawRect(background, paint)
+
+                            val iconRight = itemView.right - iconMargin
+                            val iconLeft = iconRight - deleteIcon.intrinsicWidth
+                            iconDest = Rect(iconLeft, iconTop, iconRight, iconBottom)
+                            deleteIcon.bounds = iconDest
+                            deleteIcon.draw(c)
+                        }
+                    }
+                }
+                super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive)
+            }
+        }
+        val itemTouchHelper = ItemTouchHelper(itemTouchHelperCallback)
+        itemTouchHelper.attachToRecyclerView(binding.rvEvents)
+    }
+
+    private fun saveEventsToFile() {
+        CoroutineScope(Dispatchers.IO).launch {
+            val file = File(filePath)
+            try {
+                file.bufferedWriter().use { writer ->
+                    allEvents.forEach { event ->
+                        writer.write(gson.toJson(event))
+                        writer.newLine()
+                    }
+                }
+                val fileSize = file.length()
+                withContext(Dispatchers.Main) {
+                    binding.tvFileSize.text = formatFileSize(fileSize)
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    showSnackbar("Failed to update file: ${e.message}", isError = true)
+                }
+            }
+        }
+    }
+
+    private fun updateStats() {
+        var requestCount = 0
+        var responseCount = 0
+        var errorCount = 0
+        var successCount = 0
+        var clientErrorCount = 0
+        var serverErrorCount = 0
+        var firstTimestamp: Long? = null
+        var lastTimestamp: Long? = null
+        val dateFormat = SimpleDateFormat("MMM d, yyyy HH:mm:ss", Locale.getDefault())
+
+        allEvents.forEach { event ->
+            when (event.type) {
+                "request" -> requestCount++
+                "response" -> {
+                    responseCount++
+                    when {
+                        (event.status ?: 0) in 200..299 -> successCount++
+                        (event.status ?: 0) in 400..499 -> clientErrorCount++
+                        (event.status ?: 0) in 500..599 -> serverErrorCount++
+                    }
+                }
+                "error" -> errorCount++
+            }
+            val ts = event.timestamp
+            if (firstTimestamp == null || ts < firstTimestamp!!) firstTimestamp = ts
+            if (lastTimestamp == null || ts > lastTimestamp!!) lastTimestamp = ts
+        }
+
+        binding.tvTotalEvents.text = allEvents.size.toString()
+        binding.tvSuccess.text = successCount.toString()
+        binding.tvClientErrors.text = clientErrorCount.toString()
+        binding.tvServerErrors.text = serverErrorCount.toString()
+
+        binding.statRequests.tvStatValue.text = requestCount.toString()
+        binding.statResponses.tvStatValue.text = responseCount.toString()
+        binding.statErrors.tvStatValue.text = errorCount.toString()
+
+        if (firstTimestamp != null) {
+            binding.tvFirstEvent.text = dateFormat.format(Date(firstTimestamp!!))
+        } else {
+            binding.tvFirstEvent.text = "—"
+        }
+        if (lastTimestamp != null) {
+            binding.tvLastEvent.text = dateFormat.format(Date(lastTimestamp!!))
+        } else {
+            binding.tvLastEvent.text = "—"
+        }
     }
 }

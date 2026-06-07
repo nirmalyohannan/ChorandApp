@@ -12,9 +12,16 @@ data class EventGroup(
 )
 
 class GroupAdapter(
-    private val groups: List<EventGroup>,
+    private var groups: List<EventGroup>,
     private val onGroupClick: (EventGroup) -> Unit
 ) : RecyclerView.Adapter<GroupAdapter.GroupViewHolder>() {
+
+    fun getGroupAt(position: Int): EventGroup = groups[position]
+
+    fun updateGroups(newGroups: List<EventGroup>) {
+        this.groups = newGroups
+        notifyDataSetChanged()
+    }
 
     inner class GroupViewHolder(val binding: ItemGroupBinding) :
         RecyclerView.ViewHolder(binding.root)
